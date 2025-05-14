@@ -15,8 +15,12 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class JoinDto implements TransformationDto{
+    @JsonProperty("transformationName")
     String transformationName= "join";
+    @JsonProperty("leftJoinColumn")
     List<String> leftJoinColumn;
+    @JsonProperty("rightJoinColumn")
     List<String> rightJoinColumn;
+    @JsonProperty("rightDf")
     String rightDf;
 }

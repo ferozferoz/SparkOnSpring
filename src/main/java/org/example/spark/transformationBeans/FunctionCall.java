@@ -30,7 +30,7 @@ public class FunctionCall implements Transformation  {
     }
 
     public void traceColumn(TransformationInputDto transformationInputDto){
-        FunctionCallDto functionCallDto = FunctionCallDto.builder().transformationName("add1").build();
+        FunctionCallDto functionCallDto = FunctionCallDto.builder().transformationName("add1").inputColumn(transformationInputDto.getInputCol()).build();
         TraceColumn traceColumn = TraceColumn.builder().sourceColumn(transformationInputDto.getInputCol()).transformationDto(functionCallDto).build();
         if (columnTraceMap.containsKey(transformationInputDto.getInputCol())){
             List<TraceColumn> traceColumnList = columnTraceMap.get(transformationInputDto.getInputCol());

@@ -15,9 +15,13 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class AggregateDto implements TransformationDto{
+    @JsonProperty("transformationName")
     String transformationName = "aggregate";
+    @JsonProperty("groupByCol")
     String groupByCol;
+    @JsonProperty("operation")
     String operation;
+    @JsonProperty("inputColumn")
     String inputColumn;
 
 

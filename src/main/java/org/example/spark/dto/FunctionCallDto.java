@@ -15,6 +15,10 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class FunctionCallDto implements TransformationDto{
+    @JsonProperty("transformationName")
     String transformationName = "add1";
+    @JsonProperty("inputColumn")
+    String inputColumn;
+
 
 }

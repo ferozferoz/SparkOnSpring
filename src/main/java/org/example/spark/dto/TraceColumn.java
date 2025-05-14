@@ -16,7 +16,9 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class TraceColumn {
+    @JsonProperty("sourceColumn")
     String sourceColumn;
+    @JsonProperty("transformationDto")
     TransformationDto transformationDto;
 
 }
