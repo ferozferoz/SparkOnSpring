@@ -1,12 +1,19 @@
 package org.example.spark.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.spark.dto.TraceColumn;
+import org.json.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.example.spark.dto.TransformationDto;
+import org.example.spark.dto.TransformationInputDto;
 import org.example.spark.dto.WriteRequest;
 import org.example.spark.transformationBeans.Transformation;
+import org.example.spark.utils.CommonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -23,33 +30,48 @@ public class SparkCoreService {
     SparkSessionService sparkSessionService;
     @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    Map<String, List<TraceColumn>> columnTraceMap;
 
-    public void writeData(WriteRequest writeRequest) throws Exception{
-        try {
-            Dataset<Row> dataset = readDataset(sparkSessionService.getSparkSession(), writeRequest.getDataset(), writeRequest.getDate());
-            dataset.show(false);
-            Map<String, Dataset<Row>> datasetMap = new HashMap<>();
-            datasetMap.put("ROOT",dataset);
-            Map<String, Map<String,List<TransformationDto>>> transformationDag = writeRequest.getTransformationDag();
-            for (Map.Entry<String, Map<String,List<TransformationDto>>> dagEntry : transformationDag.entrySet()) {
-                for (Map.Entry<String, List<TransformationDto>> entry : dagEntry.getValue().entrySet()) {
-                    List<Dataset<Row>> datasetList = new ArrayList<>();
-                    for(String datasetName:entry.getKey().split(",")){
-                        dataset = datasetMap.get(datasetName);
-                        datasetList.add(dataset);
-                    }
-
-                    for (TransformationDto transformationDto: entry.getValue()){
-                        Transformation transformation = applicationContext.getBean(transformationDto.getTransformationName(), Transformation.class);
-                        log.info("Operation called :: {} on dataset :: {}",transformationDto.getTransformationName(),entry.getKey());
-                        dataset = transformation.apply(transformationDto,datasetList);
-                        dataset.show(false);
-                    }
-                    log.info("new dataset generated :: {} on input dataset : {} ", dagEntry.getKey(),entry.getKey());
-                    datasetMap.put(dagEntry.getKey(),dataset);
+    public Dataset<Row> transform (WriteRequest writeRequest, Dataset<Row> dataset) throws JsonProcessingException {
+        Map<String, Dataset<Row>> datasetMap = new HashMap<>();
+        datasetMap.put("ROOT",dataset);
+        Map<String, Map<String,List<TransformationInputDto>>> transformationDag = writeRequest.getTransformationDag();
+        for (Map.Entry<String, Map<String,List<TransformationInputDto>>> dagEntry : transformationDag.entrySet()) {
+            for (Map.Entry<String, List<TransformationInputDto>> entry : dagEntry.getValue().entrySet()) {
+                List<Dataset<Row>> datasetList = new ArrayList<>();
+                for(String datasetName:entry.getKey().split(",")){
+                    dataset = datasetMap.get(datasetName);
+                    datasetList.add(dataset);
                 }
 
+                for (TransformationInputDto transformationInputDto : entry.getValue()){
+                    Transformation transformation = applicationContext.getBean(transformationInputDto.getTransformationName(), Transformation.class);
+                    log.info("Operation called :: {} on dataset :: {}", transformationInputDto.getTransformationName(),entry.getKey());
+                    dataset = transformation.apply(transformationInputDto,datasetList);
+                    dataset.show(false);
+                }
+                log.info("new dataset generated :: {} on input dataset : {} ", dagEntry.getKey(),entry.getKey());
+                datasetMap.put(dagEntry.getKey(),dataset);
             }
+
+        }
+        System.out.println(columnTraceMap);
+        CommonUtils.traceColumn(dataset,columnTraceMap,writeRequest.getColumnTrace());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonString = objectMapper.writeValueAsString(columnTraceMap);
+        System.out.println("columnTraceMap>>>>>" +jsonString);
+        //System.out.println("columnTraceMap>>>>>" + new JSONObject(columnTraceMap));
+        return dataset;
+    }
+    public void writeData(WriteRequest writeRequest) throws Exception{
+        try {
+            columnTraceMap.clear();
+            Dataset<Row> dataset = readDataset(sparkSessionService.getSparkSession(), writeRequest.getDataset(), writeRequest.getDate());
+            dataset.show(false);
+            transform(writeRequest,dataset);
+
             //dataset.write().mode(SaveMode.Overwrite).csv("./output");
         }catch (Exception ex){
             ex.printStackTrace();

@@ -1,23 +1,22 @@
 package org.example.spark.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
+@Service
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class WriteRequest {
-    String dataset;
-    String date;
-    Map<String, Map<String,List<TransformationInputDto>>> transformationDag;
-    Map<String, List<TraceColumn>> columnTrace;
+public class TraceColumn {
+    String sourceColumn;
+    TransformationDto transformationDto;
 
 }

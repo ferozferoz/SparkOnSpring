@@ -17,6 +17,7 @@ public class SparkJobController {
     @PostMapping("/write_data")
     public ResponseEntity<String> write(@RequestBody WriteRequest writeRequest) {
         try{
+
             sparkCoreService.writeData(writeRequest);
             return new ResponseEntity<>(HttpStatus.CREATED);
         }catch (Exception ex){
