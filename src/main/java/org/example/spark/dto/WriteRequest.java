@@ -2,7 +2,7 @@ package org.example.spark.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-import org.springframework.stereotype.Service;
+import org.example.spark.utils.TraceColumn;
 
 import java.util.List;
 import java.util.Map;

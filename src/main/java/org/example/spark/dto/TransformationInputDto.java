@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Getter
+@Setter
 @Service
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -15,6 +16,8 @@ import java.util.List;
 @AllArgsConstructor
 @ToString
 public class TransformationInputDto {
+    @JsonProperty("source_df")
+    String sourceDataFrame;
     @JsonProperty("transformation_name")
     String transformationName;
     /* aggregate function attributes */

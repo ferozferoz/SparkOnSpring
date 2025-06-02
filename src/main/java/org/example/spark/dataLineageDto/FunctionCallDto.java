@@ -1,10 +1,9 @@
 
-package org.example.spark.dto;
+package org.example.spark.dataLineageDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Getter
 @Setter
@@ -14,13 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class AggregateDto implements TransformationDto{
+public class FunctionCallDto implements TransformationDto{
     @JsonProperty("transformationName")
-    String transformationName = "aggregate";
-    @JsonProperty("groupByCol")
-    String groupByCol;
-    @JsonProperty("operation")
-    String operation;
+    String transformationName = "add1";
     @JsonProperty("inputColumn")
     String inputColumn;
 

@@ -1,5 +1,5 @@
 
-package org.example.spark.dto;
+package org.example.spark.dataLineageDto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;

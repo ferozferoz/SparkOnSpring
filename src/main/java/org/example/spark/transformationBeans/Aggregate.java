@@ -3,8 +3,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.example.spark.dataLineageDto.AggregateDto;
 import org.example.spark.dto.*;
-import org.example.spark.utils.CommonUtils;
+import org.example.spark.utils.TraceColumn;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -42,19 +43,19 @@ public class Aggregate implements Transformation  {
                         .operation(operationAndColumn.getOperation())
                         .groupByCol(transformationInputDto.getGroupByCol())
                         .build();
-
-                TraceColumn traceColumn = TraceColumn.builder().sourceColumn(operationAndColumn.getColumn()).transformationDto(aggregateDto).build();
+                String sourceColumn = transformationInputDto.getSourceDataFrame() + ":" + operationAndColumn.getColumn();
+                TraceColumn traceColumn = TraceColumn.builder().sourceColumn(sourceColumn).transformationDto(aggregateDto).build();
                 // if map has input column already, get the list of trace object and append to the current trace column object
                 if (columnTraceMap.containsKey(operationAndColumn.getColumn())){
                     List<TraceColumn> traceColumnList = columnTraceMap.get(operationAndColumn.getColumn());
                     List<TraceColumn> newList = new ArrayList<>();
                     newList.add(traceColumn);
                     newList.addAll(traceColumnList);
-                    columnTraceMap.putIfAbsent(operationAndColumn.getOutputColumn(),newList);
+                    columnTraceMap.put(operationAndColumn.getOutputColumn(),newList);
                 }else{
                     List<TraceColumn> newList = new ArrayList<>();
                     newList.add(traceColumn);
-                    columnTraceMap.putIfAbsent(operationAndColumn.getOutputColumn(),newList);
+                    columnTraceMap.put(operationAndColumn.getOutputColumn(),newList);
                 }
 
 
