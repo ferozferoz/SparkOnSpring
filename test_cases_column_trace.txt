@@ -1,0 +1,344 @@
+scenario 1 - multiple transformation are called on dataset in a single call
+
+
+case 1 - function call "add1" on column age 
+
+{
+	"dataset":"dummy_dataset",
+	"date":"close-of_business-date",
+	"transformationDag":{
+	"_1": { "ROOT": [{"transformation_name":"functionCall", "input_column":"age", "output_column":"age"}]}
+	
+    }
+}
+
+
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |41 |70.5  |
+|2       |akram  |jamshedpur     |50 |80.0  |
+|3       |gaurav |Ipswich        |41 |75.3  |
+|4       |Umar   |birmingham city|22 |60.4  |
+|5       |Mansoor|hyderabad      |41 |80.0  |
+|6       |Ambreen|hyderabad      |36 |55.5  |
++--------+-------+---------------+---+------+
+
+2025-05-14 09:36:32.327  INFO 21160 --- [nio-8080-exec-5] o.e.spark.service.SparkCoreService       : Operation called :: functionCall on dataset :: ROOT
+2025-05-14 09:36:32.327  WARN 21160 --- [nio-8080-exec-5] o.a.s.s.c.a.SimpleFunctionRegistry       : The function add1 replaced a previously registered function.
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |42 |70.5  |
+|2       |akram  |jamshedpur     |51 |80.0  |
+|3       |gaurav |Ipswich        |42 |75.3  |
+|4       |Umar   |birmingham city|23 |60.4  |
+|5       |Mansoor|hyderabad      |42 |80.0  |
+|6       |Ambreen|hyderabad      |37 |55.5  |
++--------+-------+---------------+---+------+
+
+2025-05-14 09:36:32.392  INFO 21160 --- [nio-8080-exec-5] o.e.spark.service.SparkCoreService       : new dataset generated :: _1 on input dataset : ROOT 
+
+{
+  "city": [
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    }
+  ],
+  "name": [
+    {
+      "sourceColumn": "name",
+      "transformationDto": null
+    }
+  ],
+  "weight": [
+    {
+      "sourceColumn": "weight",
+      "transformationDto": null
+    }
+  ],
+  "age": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1"
+      }
+    }
+  ],
+  "serialNo": [
+    {
+      "sourceColumn": "serialNo",
+      "transformationDto": null
+    }
+  ]
+}
+
+
+
+case 2 - function call "add1" on column age , followed by aggregation on age 
+
+instruction - 
+
+{
+	"dataset":"dummy_dataset",
+	"date":"close-of_business-date",
+	"transformationDag":{
+	"_1": { "ROOT": [{"transformation_name":"functionCall", "input_column":"age", "output_column":"age"}]},
+	"_2": { "_1": [{"transformation_name":"filter", "filter_expr":"city != 'hyderabad'"},{"transformation_name":"aggregate", "group_by_col":"city", "apply_on_cols":[{"operation":"sum","column":"age", "output_column":"sum_age_by_city"}]}]
+
+		}
+    }
+}
+
+
+2025-05-14 09:32:16.632  INFO 21160 --- [nio-8080-exec-2] o.a.s.s.c.e.codegen.CodeGenerator        : Code generated in 16.3829 ms
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |41 |70.5  |
+|2       |akram  |jamshedpur     |50 |80.0  |
+|3       |gaurav |Ipswich        |41 |75.3  |
+|4       |Umar   |birmingham city|22 |60.4  |
+|5       |Mansoor|hyderabad      |41 |80.0  |
+|6       |Ambreen|hyderabad      |36 |55.5  |
++--------+-------+---------------+---+------+
+
+2025-05-14 09:32:16.643  INFO 21160 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : Operation called :: functionCall on dataset :: ROOT
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |42 |70.5  |
+|2       |akram  |jamshedpur     |51 |80.0  |
+|3       |gaurav |Ipswich        |42 |75.3  |
+|4       |Umar   |birmingham city|23 |60.4  |
+|5       |Mansoor|hyderabad      |42 |80.0  |
+|6       |Ambreen|hyderabad      |37 |55.5  |
++--------+-------+---------------+---+------+
+
+2025-05-14 09:32:16.698  INFO 21160 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : new dataset generated :: _1 on input dataset : ROOT 
+2025-05-14 09:32:16.698  INFO 21160 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : Operation called :: filter on dataset :: _1
+2025-05-14 09:32:16.698  INFO 21160 --- [nio-8080-exec-2] o.e.spark.transformationBeans.Filter     : filter called with expression :: city != 'hyderabad'
+2025-05-14 09:32:16.698  INFO 21160 --- [nio-8080-exec-2] o.e.spark.transformationBeans.Filter     : traceColumn not applicable for filter as no column transformation applied..
+2025-05-14 09:32:16.753  INFO 21160 --- [nio-8080-exec-2] o.a.s.s.c.e.codegen.CodeGenerator        : Code generated in 5.7528 ms
++--------+------+---------------+---+------+
+|serialNo|name  |city           |age|weight|
++--------+------+---------------+---+------+
+|2       |akram |jamshedpur     |51 |80.0  |
+|3       |gaurav|Ipswich        |42 |75.3  |
+|4       |Umar  |birmingham city|23 |60.4  |
++--------+------+---------------+---+------+
+
+2025-05-14 09:32:16.764  INFO 21160 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : Operation called :: aggregate on dataset :: _1
+2025-05-14 09:32:16.765  INFO 21160 --- [nio-8080-exec-2] o.e.spark.transformationBeans.Aggregate  : aggregate called with parameters :: group by - city and aggregate by - {age=sum}
++---------------+---------------+
+|city           |sum_age_by_city|
++---------------+---------------+
+|hyderabad      |121            |
+|jamshedpur     |51             |
+|Ipswich        |42             |
+|birmingham city|23             |
++---------------+---------------+
+
+2025-05-14 09:32:19.433  INFO 21160 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : new dataset generated :: _2 on input dataset : _1 
+
+column trace json - 
+
+{
+  "sum_age_by_city": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "aggregate",
+        "groupByCol": "city",
+        "operation": "sum",
+        "inputColumn": "age"
+      }
+    },
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1"
+      }
+    }
+  ],
+  "city": [
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    }
+  ],
+  "age": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1"
+      }
+    }
+  ]
+}
+
+scenario 2 - transformation called in subsequent calls 
+
+--> job that perform add1 on column age --> job that perform aggregation on column age 
+
+job 1 runs, generate notification -> triggers job2 with notification containing column trace. This will generate a new column trace on initial column trace 
+
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |41 |70.5  |
+|2       |akram  |jamshedpur     |50 |80.0  |
+|3       |gaurav |Ipswich        |41 |75.3  |
+|4       |Umar   |birmingham city|22 |60.4  |
+|5       |Mansoor|hyderabad      |41 |80.0  |
+|6       |Ambreen|hyderabad      |36 |55.5  |
++--------+-------+---------------+---+------+
+
+2025-05-14 10:35:04.852  INFO 1052 --- [nio-8080-exec-2] o.e.spark.service.SparkCoreService       : Operation called :: functionCall on dataset :: ROOT
++--------+-------+---------------+---+------+
+|serialNo|name   |city           |age|weight|
++--------+-------+---------------+---+------+
+|1       |feroz  |hyderabad      |42 |70.5  |
+|2       |akram  |jamshedpur     |51 |80.0  |
+|3       |gaurav |Ipswich        |42 |75.3  |
+|4       |Umar   |birmingham city|23 |60.4  |
+|5       |Mansoor|hyderabad      |42 |80.0  |
+|6       |Ambreen|hyderabad      |37 |55.5  |
++--------+-------+---------------+---+------+
+
+
+{
+  "city": [
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    }
+  ],
+  "name": [
+    {
+      "sourceColumn": "name",
+      "transformationDto": null
+    }
+  ],
+  "weight": [
+    {
+      "sourceColumn": "weight",
+      "transformationDto": null
+    }
+  ],
+  "age": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1"
+      }
+    }
+  ],
+  "serialNo": [
+    {
+      "sourceColumn": "serialNo",
+      "transformationDto": null
+    }
+  ]
+}
+
+
+this triggers another job which contains column trace - 
+
+{
+  "city": [
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    }
+  ],
+  "name": [
+    {
+      "sourceColumn": "name",
+      "transformationDto": null
+    }
+  ],
+  "weight": [
+    {
+      "sourceColumn": "weight",
+      "transformationDto": null
+    }
+  ],
+  "age": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1",
+        "inputColumn": "age"
+      }
+    }
+  ],
+  "serialNo": [
+    {
+      "sourceColumn": "serialNo",
+      "transformationDto": null
+    }
+  ]
+}
+
+{
+	"dataset":"dummy_dataset",
+	"date":"close-of_business-date",
+	"transformationDag":{
+	
+	"_1": { "ROOT": [{"transformation_name":"filter", "filter_expr":"city != 'hyderabad'"},{"transformation_name":"aggregate", "group_by_col":"city", "apply_on_cols":[{"operation":"sum","column":"age", "output_column":"sum_age_by_city"}]}]
+
+		}
+    },
+	"columnTrace":{"city":[{"sourceColumn":"city","transformationDto":null}],"name":[{"sourceColumn":"name","transformationDto":null}],"weight":[{"sourceColumn":"weight","transformationDto":null}],"age":[{"sourceColumn":"age","transformationDto":{"transformationName":"add1","inputColumn":"age"}}],"serialNo":[{"sourceColumn":"serialNo","transformationDto":null}]}
+
+}
+
+
+
+{
+  "sum_age_by_city": [
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "aggregate",
+        "groupByCol": "city",
+        "operation": "sum",
+        "inputColumn": "age"
+      }
+    },
+    {
+      "sourceColumn": "age",
+      "transformationDto": {
+        "transformationName": "add1"
+      }
+    }
+  ],
+  "city": [
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    },
+    {
+      "sourceColumn": "city",
+      "transformationDto": null
+    }
+  ]
+}
+
+
+Testing column trace 
+
+{
+	"dataset":"dummy_dataset",
+	"date":"close-of_business-date",
+	"transformationDag":{
+	
+	"_1": { "ROOT": [{"transformation_name":"filter", "filter_expr":"city != 'hyderabad'"},{"transformation_name":"aggregate", "group_by_col":"city", "apply_on_cols":[{"operation":"sum","column":"age", "output_column":"sum_age_by_city"}]}]
+
+		}
+    },
+	"columnTrace":{"city":[{"sourceColumn":"city","transformationDto":null}],"name":[{"sourceColumn":"name","transformationDto":null}],"weight":[{"sourceColumn":"weight","transformationDto":null}],"age":[{"sourceColumn":"age","transformationDto":{"transformationName":"add1","inputColumn":"age"}}],"serialNo":[{"sourceColumn":"serialNo","transformationDto":null}]}
+
+}
